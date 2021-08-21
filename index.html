@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Image Processing App</title>
+
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+         <link rel="stylesheet" href="style/style.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+		<link href="https://fonts.googleapis.com/css?family=Francois+One&display=swap" rel="stylesheet">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+	
+	</head>
+
+
+<body id="back">
+
+	<div class="container-fluid  bg-light">
+   <div class="row main">
+<div class="col-md-3 ">
+			
+		<form>
+			<h4 class="pt-3">Create Custom Image</h4>
+			<hr>
+			<input class="form-control mb-4 mt-1" type="number" id="width" required="required"  placeholder="Width">
+			<input class="form-control mb-4" type="number" id="height" required="required" placeholder="Height">
+			<input type="color" id="color" class="mb-4" >
+		
+			<select  id="format" class="form-control mb-2">
+				<option value="jpeg" >JPEG</option>
+				<option value="png">PNG</option>
+				<option value="gif">GIF</option>
+				
+			</select>
+		<button type="button" class="btn btn-primary mt-1" id="gen-button">Generate Image</button><br><br>
+			</form>
+
+		<form id="resize-form">
+
+			<h4 class="pt-3">Resize Image</h4>
+			<hr>
+			<input type="file" accept="image/*" name="file-input" class="form-control mb-4" id="file-input">
+			<input class="form-control mb-4 mt-1" type="number" name="width2" id="width2" required="required"  placeholder="Width">
+			<input class="form-control mb-3" type="number" name="height2" id="height2" required="required" placeholder="Height">
+			<button type="submit" class="btn btn-primary resize-btn" id="button2">Resize Image</button><br><br>
+
+		</form>
+</div>
+<div class="col-md-9 bg-white shadow-sm text-center overflow-auto mt-4">
+	<div id="result"></div>
+</div>
+
+	</div>
+</div>
+
+
+<script>
+	
+$(document).ready(function(){
+
+	$(".main").css({
+		height:$(window).height()
+	});
+	$(window).resize(function(){
+
+$(".main").css({
+		height:$(window).height()
+	});
+
+	});
+
+$("#gen-button").click(function(e){
+	e.preventDefault();
+
+var width=$("#width").val();
+var height=$("#height").val();
+var color=$("#color").val();
+var format=$("#format").val();
+var a=color[1]+color[2];
+var b=color[3]+color[4];
+var c=color[5]+color[6];
+var red=parseInt(a,16);
+var green=parseInt(b,16);
+var blue=parseInt(c,16);
+
+$.ajax({
+
+	type:"POST",
+	url:"php/image.php",
+	data:{
+		width:width,
+		height:height,
+		red:red,
+		green:green,
+		blue:blue,
+		format:format
+	},
+	success:function(response){
+          
+		$("#result").html("");
+		var name=response.trim();
+		var img=document.createElement("IMG");
+		img.src="images/"+name;
+		img.style.width="80%";
+		img.style.marginLeft="10%";
+		img.style.marginRight="10%";
+		$("#result").append(img);
+
+		var a=document.createElement("A");
+		a.href="images/"+name;
+		a.download=name;
+		a.innerHTML="Download";
+		a.className="btn btn-primary py-2 my-5";
+		$("#result").append(a);
+	}
+});
+});
+
+
+});
+
+//upload file code
+$(document).ready(function(){
+	$("#file-input").on("change",function(){
+		var file=this.files[0];
+		var url=URL.createObjectURL(file);
+		var image=document.createElement("IMG");
+		image.src=url;
+		$("#result").html(image);
+		image.onload=function(){
+             
+             o_width=image.width;
+             o_height=image.height;
+             $("#width2").on("input",function(){
+                    var typed_width=Number(this.value);
+                    var ratio=typed_width/o_width;
+                    var rec_height=Math.floor(o_height*ratio);
+                    $("#height2").val(rec_height);
+                    image.width=typed_width;
+                    image.height=rec_height;
+
+             });
+                $("#height2").on("input",function(){
+                      
+                      var type_height=Number(this.value);
+                      image.height=type_height;
+
+             });
+            }
+
+            $("#resize-form").on("submit",function(e){
+
+            	e.preventDefault();
+            	var c_width=$("#width2").val();
+            	var c_height=$("#height2").val();
+            	 $.ajax({
+                           
+
+            	 	type:"POST",
+            	 	url:"php/resize.php",
+            	 	data:new FormData(this),
+            	 	processData:false,
+            	 	contentType:false,
+            	 	cache:false,
+            	 	success:function(response){
+            	 		console.log(response);
+            	 		var link="images/"+response.trim();
+            	 		var a=document.createElement("A");
+            	 		a.href=link;
+            	 		a.download=response.trim();
+            	 		a.innerHTML="<br>";
+
+            	 		a.innerHTML="Download";
+            	 		a.className="btn-primary px-5 mx-5 ";
+            	 		$("#result").append(a);
+
+            	 	}
+
+
+            	 });
+            	
+
+            });
+
+});
+});
+
+</script>
+
+</body>
+	</html>
